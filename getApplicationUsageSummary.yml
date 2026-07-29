@@ -1,0 +1,57 @@
+summary: "Get aggregated application usage metrics"
+description: "This method returns endpoint usage metrics stored automatically in the mybus logging database"
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "city"
+  type: "string"
+  required: "false"
+- in: "query"
+  name: "routeId"
+  type: "string"
+  required: "false"
+- in: "query"
+  name: "fromDate"
+  type: "string"
+  required: "false"
+- in: "query"
+  name: "toDate"
+  type: "string"
+  required: "false"
+responses:
+  200:
+    description: "Summary generated"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          city:
+            type: "string"
+          routeId:
+            type: "string"
+          endpoint:
+            type: "string"
+          method:
+            type: "string"
+          requestCount:
+            type: "integer"
+          averageDurationMs:
+            type: "number"
+          successCount:
+            type: "integer"
+          errorCount:
+            type: "integer"
+          lastRequestAt:
+            type: "string"
+  400:
+    description: "Invalid filter values"
+  409:
+    description: "Logging database is not initialized"
+  500:
+    description: "Service error"

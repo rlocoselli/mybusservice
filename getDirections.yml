@@ -1,0 +1,29 @@
+summary: "Get Directions of a specific route"
+description: "This method get directions of a specific route"
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "path"
+  name: "routeId"
+  type: "string"
+  required: "true"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Success"
+    schema:
+      type: "object"
+      properties:
+        data:
+          type: "object"
+        status:
+          type: "string"
+        message:
+          type: "string"
+ 
+  400:
+    description: "Same response is for 202, 400"

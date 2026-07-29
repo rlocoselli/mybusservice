@@ -1,0 +1,35 @@
+summary: "List application users"
+description: "This method returns users stored in the mybus administration table"
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Users listed"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          username:
+            type: "string"
+          displayName:
+            type: "string"
+          isActive:
+            type: "boolean"
+          hasPassword:
+            type: "boolean"
+          passwordUpdatedAt:
+            type: "string"
+          createdAt:
+            type: "string"
+          updatedAt:
+            type: "string"
+  409:
+    description: "Logging database is not initialized"
+  500:
+    description: "Service error"

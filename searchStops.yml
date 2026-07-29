@@ -1,0 +1,33 @@
+summary: "Search stops by name"
+description: "Returns stops whose stop_name matches the given query string (case-insensitive partial match, up to 50 results)."
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "q"
+  type: "string"
+  required: true
+  description: "Partial stop name to search for"
+responses:
+  200:
+    description: "Matching stops"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          stop_id:
+            type: "string"
+          stop_name:
+            type: "string"
+          stop_lat:
+            type: "number"
+          stop_lon:
+            type: "number"
+  400:
+    description: "Missing q parameter"

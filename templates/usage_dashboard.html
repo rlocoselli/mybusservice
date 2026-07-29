@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu Busao Analytics</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js" defer></script>
+  <script src="{{ url_for('static', filename='usage_dashboard.js') }}" defer></script>
+</head>
+<body data-page="usage">
+  <div class="page-shell">
+    <header class="hero-panel">
+      <div>
+        <p class="eyebrow">Meu Busao</p>
+        <h1>Suivi d'utilisation</h1>
+        <p class="hero-copy">Tableaux de bord pour suivre la charge applicative, les erreurs, les lignes consultées et la fréquentation.</p>
+      </div>
+      <nav class="hero-nav">
+        <a class="hero-link is-active" href="{{ url_for('usageDashboard') }}">Analytics</a>
+        <a class="hero-link" href="{{ url_for('userManagement') }}">Utilisateurs</a>
+        <button id="logoutButton" class="hero-link ghost-link" type="button">Logout</button>
+      </nav>
+    </header>
+
+    <section class="control-panel">
+      <form id="filtersForm" class="filters-grid">
+        <label>
+          <span>Ville</span>
+          <input name="city" type="text" placeholder="ex: abidjan_gtfs">
+        </label>
+        <label>
+          <span>Ligne / Route</span>
+          <input name="routeId" type="text" placeholder="ex: 12A">
+        </label>
+        <label>
+          <span>Du</span>
+          <input name="fromDate" type="date">
+        </label>
+        <label>
+          <span>Au</span>
+          <input name="toDate" type="date">
+        </label>
+        <div class="filter-actions">
+          <button type="submit">Actualiser</button>
+        </div>
+      </form>
+      <div class="export-actions">
+        <button id="exportApplicationCsvButton" type="button">Exporter usage CSV</button>
+        <button id="exportUtilizationCsvButton" type="button">Exporter frequentation CSV</button>
+        <button id="exportPdfButton" type="button">Exporter dashboard PDF</button>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="kpi-card accent-gold">
+        <span class="kpi-label">Requêtes API</span>
+        <strong id="totalRequestsKpi">0</strong>
+        <small>sur la plage filtrée</small>
+      </article>
+      <article class="kpi-card accent-coral">
+        <span class="kpi-label">Erreurs</span>
+        <strong id="totalErrorsKpi">0</strong>
+        <small>codes HTTP ≥ 400</small>
+      </article>
+      <article class="kpi-card accent-teal">
+        <span class="kpi-label">Boardings</span>
+        <strong id="totalBoardingsKpi">0</strong>
+        <small>total fréquentation</small>
+      </article>
+      <article class="kpi-card accent-ink">
+        <span class="kpi-label">Occupation moyenne</span>
+        <strong id="avgOccupancyKpi">0</strong>
+        <small>moyenne des logs</small>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="chart-card wide-card">
+        <div class="card-heading">
+          <h2>Trafic applicatif dans le temps</h2>
+          <p>Requêtes quotidiennes et volume d'erreurs.</p>
+        </div>
+        <canvas id="applicationTimelineChart"></canvas>
+      </article>
+      <article class="chart-card">
+        <div class="card-heading">
+          <h2>Top endpoints</h2>
+          <p>Les endpoints les plus sollicités.</p>
+        </div>
+        <canvas id="topEndpointsChart"></canvas>
+      </article>
+      <article class="chart-card wide-card">
+        <div class="card-heading">
+          <h2>Utilisation des lignes</h2>
+          <p>Boardings, descentes et occupation moyenne par jour.</p>
+        </div>
+        <canvas id="utilizationTimelineChart"></canvas>
+      </article>
+      <article class="chart-card">
+        <div class="card-heading">
+          <h2>Lignes les plus suivies</h2>
+          <p>Classement par volume de boardings.</p>
+        </div>
+        <canvas id="topRoutesChart"></canvas>
+      </article>
+      <article class="chart-card">
+        <div class="card-heading">
+          <h2>Repartition par ville</h2>
+          <p>Volume de requetes API par ville.</p>
+        </div>
+        <canvas id="cityBreakdownChart"></canvas>
+      </article>
+      <article class="chart-card">
+        <div class="card-heading">
+          <h2>Repartition par methode</h2>
+          <p>Poids relatif GET/POST/PUT/PATCH/DELETE.</p>
+        </div>
+        <canvas id="methodBreakdownChart"></canvas>
+      </article>
+    </section>
+
+    <section class="table-grid">
+      <article class="table-card">
+        <div class="card-heading">
+          <h2>Détail usage API</h2>
+          <p>Vue agrégée par endpoint.</p>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>Méthode</th>
+                <th>Ville</th>
+                <th>Route</th>
+                <th>Requêtes</th>
+                <th>Erreurs</th>
+                <th>Durée moy.</th>
+              </tr>
+            </thead>
+            <tbody id="applicationUsageTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="table-card">
+        <div class="card-heading">
+          <h2>Détail fréquentation</h2>
+          <p>Vue agrégée par ligne.</p>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ville</th>
+                <th>Route</th>
+                <th>Ligne</th>
+                <th>Direction</th>
+                <th>Événements</th>
+                <th>Boardings</th>
+                <th>Occupation moy.</th>
+              </tr>
+            </thead>
+            <tbody id="lineUtilizationTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <p id="dashboardMessage" class="status-line"></p>
+  </div>
+</body>
+</html>

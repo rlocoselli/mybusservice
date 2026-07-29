@@ -1,0 +1,27 @@
+summary: "Get calendar of services from the bus lines of a specific city"
+description: "This method get calendar of services from a specific city"
+produces:
+- "application/json"
+items:
+  - teste
+parameters:
+- $ref: "#/cities"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Success"
+    schema:
+      type: "object"
+      properties:
+        data:
+          type: "object"
+        status:
+          type: "string"
+        message:
+          type: "string"
+ 
+  400:
+    description: "Same response is for 202, 400"

@@ -1,0 +1,10 @@
+components:
+  schemas:
+    Color:
+      type: string
+      enum:
+        - black
+        - white
+        - red
+        - green
+        - blue

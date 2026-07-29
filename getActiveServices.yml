@@ -1,0 +1,32 @@
+summary: "Get active service IDs for a given date"
+description: "Returns all GTFS service_id values that are active on the specified date, taking into account both the calendar table (regular weekly service) and calendar_dates exceptions."
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "path"
+  name: "date"
+  type: "string"
+  required: true
+  description: "Date in YYYYMMDD (or YYYY-MM-DD) format"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Date and list of active service IDs"
+    schema:
+      type: "object"
+      properties:
+        date:
+          type: "string"
+        activeServices:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              service_id:
+                type: "string"
+  400:
+    description: "Invalid date format"

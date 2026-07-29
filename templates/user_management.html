@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu Busao Users</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+  <script src="{{ url_for('static', filename='user_management.js') }}" defer></script>
+</head>
+<body data-page="users">
+  <div class="page-shell">
+    <header class="hero-panel compact-hero">
+      <div>
+        <p class="eyebrow">Meu Busao</p>
+        <h1>Administration des utilisateurs</h1>
+        <p class="hero-copy">Le compte par défaut <strong>meubusao</strong> est créé au bootstrap de la base `mybus`.</p>
+      </div>
+      <nav class="hero-nav">
+        <a class="hero-link" href="{{ url_for('usageDashboard') }}">Analytics</a>
+        <a class="hero-link is-active" href="{{ url_for('userManagement') }}">Utilisateurs</a>
+        <button id="logoutButton" class="hero-link ghost-link" type="button">Logout</button>
+      </nav>
+    </header>
+
+    <section class="control-panel">
+      <form id="passwordForm" class="password-form">
+        <label>
+          <span>Utilisateur</span>
+          <input name="username" type="text" value="meubusao" required>
+        </label>
+        <label>
+          <span>Nouveau mot de passe</span>
+          <input name="password" type="password" minlength="8" required>
+        </label>
+        <div class="filter-actions">
+          <button type="submit">Hasher et attribuer</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="table-grid single-table-grid">
+      <article class="table-card">
+        <div class="card-heading">
+          <h2>Comptes disponibles</h2>
+          <p>Le hash n'est jamais affiché, uniquement son état.</p>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Utilisateur</th>
+                <th>Nom affiché</th>
+                <th>Actif</th>
+                <th>Hash présent</th>
+                <th>Dernière mise à jour du mot de passe</th>
+                <th>Créé le</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <p id="userManagementMessage" class="status-line"></p>
+  </div>
+</body>
+</html>

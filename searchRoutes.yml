@@ -1,0 +1,35 @@
+summary: "Search routes by name"
+description: "Returns routes whose route_short_name or route_long_name match the given query string (case-insensitive partial match, up to 50 results)."
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "q"
+  type: "string"
+  required: true
+  description: "Partial route name to search for"
+responses:
+  200:
+    description: "Matching routes"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          route_id:
+            type: "string"
+          route_short_name:
+            type: "string"
+          route_long_name:
+            type: "string"
+          route_color:
+            type: "string"
+          route_text_color:
+            type: "string"
+  400:
+    description: "Missing q parameter"

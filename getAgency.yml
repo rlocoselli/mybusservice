@@ -1,0 +1,32 @@
+summary: "Get agency information for a city"
+description: "Returns the agency (or agencies) defined in the GTFS feed for the given city."
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Agency records"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          agency_id:
+            type: "string"
+          agency_name:
+            type: "string"
+          agency_url:
+            type: "string"
+          agency_timezone:
+            type: "string"
+          agency_lang:
+            type: "string"
+          agency_phone:
+            type: "string"
+  400:
+    description: "Same response is for 202, 400"

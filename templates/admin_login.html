@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meu Busao Admin Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+  <script src="{{ url_for('static', filename='admin_login.js') }}" defer></script>
+</head>
+<body data-page="admin-login">
+  <div class="page-shell login-shell">
+    <section class="hero-panel compact-hero">
+      <div>
+        <p class="eyebrow">Meu Busao</p>
+        <h1>Connexion dashboard</h1>
+        <p class="hero-copy">Connectez-vous pour accéder aux dashboards d'utilisation et à l'administration utilisateur.</p>
+      </div>
+      <nav class="hero-nav">
+        <a class="hero-link" href="{{ url_for('usageDashboard') }}">Analytics</a>
+        <a class="hero-link" href="{{ url_for('userManagement') }}">Utilisateurs</a>
+      </nav>
+    </section>
+
+    <section class="login-card">
+      <form id="adminLoginForm" class="login-form">
+        <label>
+          <span>Utilisateur PostgreSQL</span>
+          <input name="username" type="text" required placeholder="Ex. meubusao" autocomplete="username">
+        </label>
+        <label>
+          <span>Mot de passe</span>
+          <input name="password" type="password" required placeholder="Mot de passe admin" autocomplete="current-password">
+        </label>
+        <div class="filter-actions">
+          <button type="submit">Se connecter</button>
+        </div>
+      </form>
+      <p class="hero-copy">Le login dashboard utilise la table PostgreSQL <strong>app_users</strong> avec un mot de passe hashé.</p>
+      <p id="adminLoginMessage" class="status-line"></p>
+    </section>
+  </div>
+</body>
+</html>

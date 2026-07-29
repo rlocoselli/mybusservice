@@ -1,0 +1,45 @@
+summary: "Find stops within a given radius of a coordinate"
+description: "Returns all stops within radiusMeters metres of the given lat/lon, ordered by distance. Uses the Haversine formula computed in the database."
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "lat"
+  type: "number"
+  required: true
+  description: "Latitude of the reference point"
+- in: "query"
+  name: "lon"
+  type: "number"
+  required: true
+  description: "Longitude of the reference point"
+- in: "query"
+  name: "radiusMeters"
+  type: "number"
+  required: false
+  description: "Search radius in metres (default 500)"
+responses:
+  200:
+    description: "List of stops with distance_meters field, ordered by proximity"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          stop_id:
+            type: "string"
+          stop_name:
+            type: "string"
+          stop_lat:
+            type: "number"
+          stop_lon:
+            type: "number"
+          distance_meters:
+            type: "number"
+  400:
+    description: "Missing or invalid lat/lon parameters"

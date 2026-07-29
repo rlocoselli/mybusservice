@@ -1,0 +1,29 @@
+summary: "Get Stops by Trip from a city passed in querystring"
+description: "This method get stops by trip from a specific city"
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "path"
+  name: "trip"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Success"
+    schema:
+      type: "object"
+      properties:
+        data:
+          type: "object"
+        status:
+          type: "string"
+        message:
+          type: "string"
+ 
+  400:
+    description: "Same response is for 202, 400"

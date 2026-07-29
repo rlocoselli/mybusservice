@@ -1,0 +1,7 @@
+__pycache__
+venv/
+*.exe
+*.sqbpro
+.git
+.txt
+.db

@@ -1,0 +1,41 @@
+summary: "Create the mybus logging database and required tables"
+description: "This method creates the mybus database when needed and creates logging tables if they do not exist"
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Database and tables already existed or were verified"
+    schema:
+      type: "object"
+      properties:
+        message:
+          type: "string"
+        database:
+          type: "string"
+        databaseCreated:
+          type: "boolean"
+        createdTables:
+          type: "array"
+          items:
+            type: "string"
+        availableTables:
+          type: "array"
+          items:
+            type: "string"
+        procedures:
+          type: "array"
+          items:
+            type: "string"
+        users:
+          type: "array"
+          items:
+            type: "string"
+  201:
+    description: "Database or tables were created"
+  500:
+    description: "Service error"

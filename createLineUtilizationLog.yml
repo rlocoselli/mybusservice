@@ -1,0 +1,69 @@
+summary: "Create a line utilization log entry"
+description: "This method stores utilization data for a line, route, trip, or stop in the mybus logging database"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "body"
+  name: "body"
+  required: "true"
+  schema:
+    type: "object"
+    required:
+    - "city"
+    properties:
+      applicationName:
+        type: "string"
+      city:
+        type: "string"
+      routeId:
+        type: "string"
+      lineName:
+        type: "string"
+      direction:
+        type: "string"
+      tripId:
+        type: "string"
+      stopId:
+        type: "string"
+      vehicleId:
+        type: "string"
+      boardings:
+        type: "integer"
+      alightings:
+        type: "integer"
+      occupancy:
+        type: "integer"
+      occupancyRate:
+        type: "number"
+      source:
+        type: "string"
+      observedAt:
+        type: "string"
+      extraData:
+        type: "object"
+responses:
+  201:
+    description: "Log created"
+    schema:
+      type: "object"
+      properties:
+        message:
+          type: "string"
+        id:
+          type: "integer"
+        createdAt:
+          type: "string"
+        observedAt:
+          type: "string"
+  400:
+    description: "Invalid request payload"
+  409:
+    description: "Logging database is not initialized"
+  500:
+    description: "Service error"

@@ -1,0 +1,42 @@
+summary: "Get Stop Time by route, direction, city, stop id and weekday"
+description: "This method get stop time / timetable from a specific city"
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "path"
+  name: "routeId"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "direction"
+  type: "string"
+  required: "true"
+- in: "path"
+  name: "weekday"
+  enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+  type: "string"
+  required: "true"
+- in: "path"
+  name: "stopId"
+  type: "string"
+  required: "true"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+responses:
+  200:
+    description: "Success"
+    schema:
+      type: "object"
+      properties:
+        data:
+          type: "object"
+        status:
+          type: "string"
+        message:
+          type: "string"
+ 
+  400:
+    description: "Same response is for 202, 400"

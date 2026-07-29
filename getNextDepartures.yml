@@ -1,0 +1,58 @@
+summary: "Get the next departures from a given stop"
+description: "Returns the next N departures from a specific stop on a given date and from a given time, including route and headsign information. Date defaults to today and time defaults to now."
+produces:
+- "application/json"
+parameters:
+- $ref: "#/cities"
+- in: "path"
+  name: "stopId"
+  type: "string"
+  required: true
+  description: "GTFS stop_id"
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "date"
+  type: "string"
+  required: false
+  description: "Date in YYYYMMDD format. Defaults to today."
+- in: "query"
+  name: "time"
+  type: "string"
+  required: false
+  description: "Time in HH:MM:SS format. Defaults to current local time."
+- in: "query"
+  name: "limit"
+  type: "integer"
+  required: false
+  description: "Maximum number of departures to return (default 10)"
+responses:
+  200:
+    description: "List of upcoming departures"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          departure_time:
+            type: "string"
+          route_id:
+            type: "string"
+          route_short_name:
+            type: "string"
+          route_long_name:
+            type: "string"
+          route_color:
+            type: "string"
+          trip_headsign:
+            type: "string"
+          trip_id:
+            type: "string"
+          stop_id:
+            type: "string"
+          stop_name:
+            type: "string"
+  400:
+    description: "Invalid parameters"

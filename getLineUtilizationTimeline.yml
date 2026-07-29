@@ -1,0 +1,49 @@
+summary: "Get line utilization timeline"
+description: "This method returns daily line utilization metrics for dashboard charts"
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: "true"
+- in: "query"
+  name: "city"
+  type: "string"
+  required: "false"
+- in: "query"
+  name: "routeId"
+  type: "string"
+  required: "false"
+- in: "query"
+  name: "fromDate"
+  type: "string"
+  required: "false"
+- in: "query"
+  name: "toDate"
+  type: "string"
+  required: "false"
+responses:
+  200:
+    description: "Timeline generated"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          bucket:
+            type: "string"
+          eventCount:
+            type: "integer"
+          totalBoardings:
+            type: "integer"
+          totalAlightings:
+            type: "integer"
+          averageOccupancy:
+            type: "number"
+  400:
+    description: "Invalid filter values"
+  409:
+    description: "Logging database is not initialized"
+  500:
+    description: "Service error"
