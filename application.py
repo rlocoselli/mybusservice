@@ -6,11 +6,12 @@ from urllib.parse import unquote
 from uuid import uuid4
 import csv
 import io
+import os
 import re
 from werkzeug.exceptions import HTTPException
 from CustomJSONEncoder import CustomJSONEncoder
 from flasgger import Swagger
-from flasgger.utils import swag_from
+from flasgger.utils import swag_from as flasgger_swag_from
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from util.constants import NoDatabaseFound
@@ -21,6 +22,14 @@ from logging_database import assign_password_to_user, authenticate_app_user, cre
 import simplejson as json
 import jwt
 import sqlite3
+
+SWAGGER_DOCS_DIR = "swagger"
+
+
+def swag_from(filename, *args, **kwargs):
+    if isinstance(filename, str) and filename.endswith(".yml") and not os.path.dirname(filename):
+        filename = os.path.join(SWAGGER_DOCS_DIR, filename)
+    return flasgger_swag_from(filename, *args, **kwargs)
 
 def getCities():
         print ("Getting Cities")
@@ -47,7 +56,7 @@ app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 
 app.config['JSON_AS_ASCII'] = False
-app.config ['SECRET_KEY'] = "aooeioeriureoireo"
+app.config ['SECRET_KEY'] = os.getenv("SECRET_KEY", "aooeioeriureoireo")
 
 app.config['SWAGGER'] = {
     'title': 'My Bus Service - Meu Busao',
