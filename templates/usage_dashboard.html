@@ -104,6 +104,13 @@
         </div>
         <canvas id="topRoutesChart"></canvas>
       </article>
+      <article class="chart-card wide-card">
+        <div class="card-heading">
+          <h2>Lignes les plus consultées</h2>
+          <p>Classement des lignes/routes les plus demandées dans l'API.</p>
+        </div>
+        <canvas id="consultedRoutesChart"></canvas>
+      </article>
       <article class="chart-card">
         <div class="card-heading">
           <h2>Repartition par ville</h2>
@@ -117,6 +124,79 @@
           <p>Poids relatif GET/POST/PUT/PATCH/DELETE.</p>
         </div>
         <canvas id="methodBreakdownChart"></canvas>
+      </article>
+    </section>
+
+    <section class="insight-grid">
+      <article class="table-card insight-card">
+        <div class="card-heading">
+          <h2>Top lignes consultées</h2>
+          <p>Lecture basée sur les requêtes API avec route/ligne renseignée.</p>
+        </div>
+        <div class="table-scroll compact-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ville</th>
+                <th>Route</th>
+                <th>Requêtes</th>
+                <th>Erreurs</th>
+                <th>Endpoint principal</th>
+              </tr>
+            </thead>
+            <tbody id="consultedRoutesTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="table-card insight-card pivot-card">
+        <div class="card-heading">
+          <h2>Pivot table analytique</h2>
+          <p>Glissez les champs vers Lignes / Colonnes / Valeur pour explorer.</p>
+        </div>
+        <div class="pivot-controls">
+          <label>
+            <span>Jeu de données</span>
+            <select id="pivotDatasetSelect">
+              <option value="application">Usage API</option>
+              <option value="utilization">Fréquentation lignes</option>
+            </select>
+          </label>
+          <label>
+            <span>Agrégation</span>
+            <select id="pivotAggregatorSelect">
+              <option value="sum">Somme</option>
+              <option value="avg">Moyenne</option>
+              <option value="count">Nombre</option>
+              <option value="max">Maximum</option>
+            </select>
+          </label>
+          <button id="resetPivotButton" type="button">Réinitialiser pivot</button>
+        </div>
+        <div class="pivot-builder">
+          <div class="pivot-field-bank">
+            <h3>Champs disponibles</h3>
+            <div id="pivotFields" class="field-chip-list"></div>
+          </div>
+          <div class="pivot-drop-area">
+            <div class="pivot-zone" data-zone="rows">
+              <span>Lignes (plusieurs champs)</span>
+              <div id="pivotRows" class="pivot-dropzone"></div>
+            </div>
+            <div class="pivot-zone" data-zone="columns">
+              <span>Colonnes (un champ)</span>
+              <div id="pivotColumns" class="pivot-dropzone"></div>
+            </div>
+            <div class="pivot-zone" data-zone="value">
+              <span>Valeur (un indicateur)</span>
+              <div id="pivotValue" class="pivot-dropzone single-value"></div>
+            </div>
+          </div>
+        </div>
+        <div class="table-scroll pivot-table-scroll">
+          <table id="pivotTable"></table>
+        </div>
       </article>
     </section>
 
