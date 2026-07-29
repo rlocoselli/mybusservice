@@ -7,7 +7,6 @@ Werkzeug==2.2.2
 wrapt==1.12.1
 simplejson==3.17.2
 PyJWT==1.7.1
-gunicorn==20.0.4
 Flask==2.0.3
 flasgger==0.9.7.1
 pyodbc==5.2.0
