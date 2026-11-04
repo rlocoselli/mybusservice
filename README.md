@@ -14,6 +14,12 @@ Example: http://127.0.0.1:5000/sumProgression/2/2/2
 
 # Deploy Bitbucket + Heroku en une commande
 
+## Origine du trafic dans le dashboard
+
+Le dashboard admin (`/admin/usage-dashboard`) affiche les requêtes API par origine : site web, application mobile ou non identifiée. Les mêmes filtres de ville, ligne et dates s'appliquent à cette répartition.
+
+Pour identifier les clients de façon fiable, envoyez `X-Client-Application: web` depuis le site et `X-Client-Application: mobile` depuis l'application. Pour les requêtes historiques sans cet en-tête, le serveur utilise le `User-Agent` lorsqu'il est reconnaissable. Un navigateur sur téléphone reste classé comme site web. Les autres requêtes restent non identifiées.
+
 Un script est disponible: [deploy.sh](deploy.sh)
 
 ## Pré-requis

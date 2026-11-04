@@ -17,7 +17,7 @@ from reportlab.pdfgen import canvas
 from util.constants import NoDatabaseFound
 from util.converter import rowConverter
 from databaseMeuBusao import getConnectionCursor
-from logging_database import assign_password_to_user, authenticate_app_user, create_application_request_log, create_line_utilization_log, ensure_logging_database, get_application_usage_summary, get_application_usage_timeline, get_line_utilization_summary, get_line_utilization_timeline, is_logging_database_ready, list_app_users
+from logging_database import assign_password_to_user, authenticate_app_user, create_application_request_log, create_line_utilization_log, ensure_logging_database, get_application_usage_sources, get_application_usage_summary, get_application_usage_timeline, get_line_utilization_summary, get_line_utilization_timeline, is_logging_database_ready, list_app_users
 
 import simplejson as json
 import jwt
@@ -537,6 +537,20 @@ def getApplicationUsageTimeline():
         timeline = get_application_usage_timeline(LOGGING_DATABASE_NAME, **parse_dashboard_filter_args())
 
         return jsonify(timeline)
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 400
+    except Exception as err:
+        return service_error_response(err)
+
+
+@app.route('/logs/application-usage/sources', methods=["GET"])
+@swag_from("getApplicationUsageSources.yml")
+@token_required
+def getApplicationUsageSources():
+    try:
+        if not is_logging_database_ready(LOGGING_DATABASE_NAME):
+            return jsonify({"message": "Logging database is not ready. Call /admin/setupMyBusLoggingDatabase first."}), 409
+        return jsonify(get_application_usage_sources(LOGGING_DATABASE_NAME, **parse_dashboard_filter_args()))
     except ValueError as err:
         return jsonify({"message": str(err)}), 400
     except Exception as err:

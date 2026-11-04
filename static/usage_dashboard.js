@@ -351,6 +351,39 @@ function renderMethodBreakdownChart(summary) {
   });
 }
 
+function renderSourceBreakdown(sources) {
+  const labels = { web: "Site web", mobile: "Application mobile", unknown: "Non identifiée" };
+  const colors = { web: chartPalette.teal, mobile: chartPalette.gold, unknown: "#8c9299" };
+  const ordered = ["web", "mobile", "unknown"].map((source) =>
+    sources.find((item) => item.source === source) || { source, requestCount: 0, errorCount: 0 }
+  );
+  const total = ordered.reduce((sum, item) => sum + item.requestCount, 0);
+  upsertChart("sourceBreakdownChart", {
+    type: "doughnut",
+    data: {
+      labels: ordered.map((item) => labels[item.source]),
+      datasets: [{
+        data: ordered.map((item) => item.requestCount),
+        backgroundColor: ordered.map((item) => colors[item.source]),
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+  document.getElementById("sourceBreakdownList").innerHTML = ordered.map((item) => `
+    <div class="source-row">
+      <span class="source-dot" style="background:${colors[item.source]}"></span>
+      <span>${labels[item.source]}</span>
+      <strong>${formatNumber(item.requestCount)}</strong>
+      <small>${total ? formatNumber(item.requestCount * 100 / total, 1) : "0,0"} %</small>
+    </div>
+  `).join("");
+}
+
 function fillApplicationTable(summary) {
   const body = document.getElementById("applicationUsageTableBody");
   body.innerHTML = summary.map((item) => `
@@ -657,11 +690,12 @@ async function loadDashboard() {
   setMessage("Chargement des métriques...");
 
   try {
-    const [applicationSummary, applicationTimeline, lineSummary, lineTimeline] = await Promise.all([
+    const [applicationSummary, applicationTimeline, lineSummary, lineTimeline, sources] = await Promise.all([
       fetchJson(`/logs/application-usage/summary${queryString}`, token),
       fetchJson(`/logs/application-usage/timeline${queryString}`, token),
       fetchJson(`/logs/line-utilization/summary${queryString}`, token),
-      fetchJson(`/logs/line-utilization/timeline${queryString}`, token)
+      fetchJson(`/logs/line-utilization/timeline${queryString}`, token),
+      fetchJson(`/logs/application-usage/sources${queryString}`, token)
     ]);
 
     dashboardData = { application: applicationSummary, utilization: lineSummary };
@@ -675,6 +709,7 @@ async function loadDashboard() {
     renderConsultedRoutes(applicationSummary);
     renderCityBreakdownChart(applicationSummary);
     renderMethodBreakdownChart(applicationSummary);
+    renderSourceBreakdown(sources);
     renderPivotTable();
 
     setMessage("Données chargées.", "success");
@@ -684,6 +719,17 @@ async function loadDashboard() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const sections = [...document.querySelectorAll(".dashboard-section")];
+  document.getElementById("expandAllButton").addEventListener("click", () => {
+    sections.forEach((section) => { section.open = true; });
+  });
+  document.getElementById("collapseAllButton").addEventListener("click", () => {
+    sections.forEach((section) => { section.open = false; });
+  });
+  sections.forEach((section) => section.addEventListener("toggle", () => {
+    if (section.open) window.requestAnimationFrame(() => Object.values(charts).forEach((chart) => chart.resize()));
+  }));
+
   document.getElementById("logoutButton").addEventListener("click", () => {
     clearStoredToken();
     redirectToLogin();

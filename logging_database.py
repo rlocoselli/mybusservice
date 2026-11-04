@@ -508,6 +508,44 @@ def get_application_usage_summary(database_name=DEFAULT_LOG_DATABASE, city=None,
         session.close()
 
 
+def get_application_usage_sources(database_name=DEFAULT_LOG_DATABASE, city=None, route_id=None, start_at=None, end_at=None):
+    """Group requests by client type, preferring the explicit client header."""
+    session = _get_session_factory(database_name)()
+    try:
+        client = func.lower(func.coalesce(ApplicationRequestLog.application_name, ""))
+        agent = func.lower(func.coalesce(ApplicationRequestLog.user_agent, ""))
+        source = case(
+            (client.op("~")("web|website|browser|site"), "web"),
+            (client.op("~")("mobile|android|ios|iphone|ipad|flutter|react.native"), "mobile"),
+            (agent.op("~")("okhttp|dart|cfnetwork|alamofire|react.native|expo"), "mobile"),
+            (agent.op("~")("mozilla|chrome|safari|firefox|edg/"), "web"),
+            else_="unknown",
+        )
+        statement = select(
+            source.label("source"),
+            func.count(ApplicationRequestLog.id).label("request_count"),
+            func.sum(case((ApplicationRequestLog.response_status >= 400, 1), else_=0)).label("error_count"),
+        ).group_by(source)
+
+        if city:
+            statement = statement.where(ApplicationRequestLog.city == city)
+        if route_id:
+            statement = statement.where(ApplicationRequestLog.route_id == route_id)
+        start_at_value = _normalize_datetime(start_at)
+        end_at_value = _normalize_datetime(end_at)
+        if start_at_value:
+            statement = statement.where(ApplicationRequestLog.created_at >= start_at_value)
+        if end_at_value:
+            statement = statement.where(ApplicationRequestLog.created_at <= end_at_value)
+
+        return [
+            {"source": row.source, "requestCount": int(row.request_count), "errorCount": int(row.error_count or 0)}
+            for row in session.execute(statement).all()
+        ]
+    finally:
+        session.close()
+
+
 def get_application_usage_timeline(database_name=DEFAULT_LOG_DATABASE, city=None, route_id=None, start_at=None, end_at=None):
     session = _get_session_factory(database_name)()
 

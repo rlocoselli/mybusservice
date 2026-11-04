@@ -1,0 +1,40 @@
+summary: "Get API request counts by client source"
+description: "Classifies requests using X-Client-Application first, then User-Agent. Unrecognized clients are returned as unknown. Mobile browsers are web traffic."
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: true
+- in: "query"
+  name: "city"
+  type: "string"
+- in: "query"
+  name: "routeId"
+  type: "string"
+- in: "query"
+  name: "fromDate"
+  type: "string"
+- in: "query"
+  name: "toDate"
+  type: "string"
+responses:
+  200:
+    description: "Request counts by source"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          source:
+            type: "string"
+            enum: [web, mobile, unknown]
+          requestCount:
+            type: "integer"
+          errorCount:
+            type: "integer"
+  400:
+    description: "Invalid filter values"
+  409:
+    description: "Logging database is not initialized"

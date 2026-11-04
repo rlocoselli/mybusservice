@@ -75,7 +75,25 @@
       </article>
     </section>
 
+    <div class="section-actions">
+      <button id="expandAllButton" type="button">Tout déplier</button>
+      <button id="collapseAllButton" type="button">Tout replier</button>
+    </div>
+
+    <details class="dashboard-section" open>
+      <summary>Graphiques <span>Trafic et fréquentation</span></summary>
     <section class="chart-grid">
+      <article class="chart-card source-card">
+        <div class="card-heading">
+          <h2>Origine du trafic</h2>
+          <p>Site web, application mobile ou source non identifiée.</p>
+        </div>
+        <div class="source-layout">
+          <canvas id="sourceBreakdownChart" aria-label="Répartition des requêtes par origine"></canvas>
+          <div id="sourceBreakdownList" class="source-list"></div>
+        </div>
+        <small class="source-note">Classement basé sur X-Client-Application, puis User-Agent. Un navigateur mobile compte comme site web. Ajoutez l'en-tête X-Client-Application: web ou mobile pour une attribution fiable.</small>
+      </article>
       <article class="chart-card wide-card">
         <div class="card-heading">
           <h2>Trafic applicatif dans le temps</h2>
@@ -126,7 +144,10 @@
         <canvas id="methodBreakdownChart"></canvas>
       </article>
     </section>
+    </details>
 
+    <details class="dashboard-section">
+      <summary>Explorer les données <span>Lignes consultées et pivot</span></summary>
     <section class="insight-grid">
       <article class="table-card insight-card">
         <div class="card-heading">
@@ -199,7 +220,10 @@
         </div>
       </article>
     </section>
+    </details>
 
+    <details class="dashboard-section">
+      <summary>Tableaux détaillés <span>Usage API et fréquentation</span></summary>
     <section class="table-grid">
       <article class="table-card">
         <div class="card-heading">
@@ -246,6 +270,7 @@
         </div>
       </article>
     </section>
+    </details>
 
     <p id="dashboardMessage" class="status-line"></p>
   </div>
