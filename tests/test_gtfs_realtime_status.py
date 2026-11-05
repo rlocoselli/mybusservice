@@ -68,6 +68,40 @@ class RealtimeStatusTests(unittest.TestCase):
         self.assertNotIn(b"private-key", response.data)
         self.assertNotIn(b"provider.example", response.data)
 
+    def test_fresh_vehicle_and_active_alert_are_exposed_without_feed_url(self):
+        now = int(time())
+        self.config["Grenoble_France"]["vehiclePositions"] = "https://provider.example/vehicles.pb"
+        self.config["Grenoble_France"]["serviceAlerts"] = "https://provider.example/alerts.pb"
+        vehicle_feed = gtfs_realtime_pb2.FeedMessage()
+        vehicle_feed.header.gtfs_realtime_version = "2.0"
+        vehicle_feed.header.timestamp = now
+        vehicle = vehicle_feed.entity.add(id="vehicle-1").vehicle
+        vehicle.trip.route_id = "12"
+        vehicle.vehicle.id = "bus-1"
+        vehicle.position.latitude = 45.188
+        vehicle.position.longitude = 5.724
+        vehicle.timestamp = now
+        alert_feed = gtfs_realtime_pb2.FeedMessage()
+        alert_feed.header.gtfs_realtime_version = "2.0"
+        alert_feed.header.timestamp = now
+        alert = alert_feed.entity.add(id="alert-1").alert
+        alert.informed_entity.add(route_id="12")
+        alert.header_text.translation.add(text="Déviation", language="fr")
+        alert.header_text.translation.add(text="Desvio", language="pt")
+        alert.active_period.add(start=now - 30, end=now + 300)
+
+        def fetch(request, timeout):
+            payload = alert_feed if "alerts" in request.full_url else vehicle_feed
+            return FakeResponse(payload.SerializeToString())
+
+        with patch.dict(os.environ, {"GTFS_REALTIME_FEEDS": json.dumps(self.config)}):
+            with patch.object(realtime, "urlopen", side_effect=fetch):
+                vehicles = realtime.get_realtime_entities("Grenoble_France", "vehiclePositions")
+                alerts = realtime.get_realtime_entities("Grenoble_France", "serviceAlerts", "fr")
+        self.assertEqual(vehicles["items"][0]["route_id"], "12")
+        self.assertEqual(alerts["items"][0]["title"], "Déviation")
+        self.assertNotIn("provider.example", str(vehicles) + str(alerts))
+
 
 if __name__ == "__main__":
     unittest.main()

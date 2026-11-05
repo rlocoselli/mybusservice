@@ -1,0 +1,12 @@
+summary: "Observed line utilization for the last 30 days"
+description: "Returns aggregated observations by route and direction. Missing observations do not imply zero traffic."
+produces: ["application/json"]
+parameters:
+- {in: header, name: X-API-Key, type: string, required: true}
+- {in: path, name: city, type: string, required: true}
+- {in: query, name: routeId, type: string, required: false}
+responses:
+  200:
+    description: "Observed metrics, or available=false when logging is not initialized"
+  403:
+    description: "API key required"

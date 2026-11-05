@@ -1,0 +1,11 @@
+summary: "GTFS Realtime feed status for a city"
+description: "Returns the status of server-configured feeds without exposing feed URLs or credentials."
+produces: ["application/json"]
+parameters:
+- {in: header, name: X-API-Key, type: string, required: true}
+- {in: path, name: city, type: string, required: true}
+responses:
+  200:
+    description: "Feed types, freshness and entity counts"
+  403:
+    description: "API key required"

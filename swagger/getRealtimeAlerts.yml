@@ -1,0 +1,12 @@
+summary: "Current GTFS Realtime service alerts"
+description: "Returns active alerts from the configured Service Alerts feed."
+produces: ["application/json"]
+parameters:
+- {in: header, name: X-API-Key, type: string, required: true}
+- {in: path, name: city, type: string, required: true}
+- {in: query, name: lang, type: string, required: false}
+responses:
+  200:
+    description: "Supported, connected and current alert items"
+  403:
+    description: "API key required"

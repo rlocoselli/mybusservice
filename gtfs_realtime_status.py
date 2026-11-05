@@ -65,6 +65,7 @@ def _check_feed(city, feed_type, entry):
             return cached[1]
 
     result = {"type": feed_type, "status": "error", "checkedAt": datetime.now(timezone.utc).isoformat()}
+    message = None
     try:
         request = Request(entry["url"], headers={"Accept": "application/x-protobuf", **entry["headers"]})
         with urlopen(request, timeout=5) as response:
@@ -78,6 +79,7 @@ def _check_feed(city, feed_type, entry):
             message.ParseFromString(payload)
             if not message.IsInitialized():
                 result["detail"] = "Invalid GTFS Realtime protobuf"
+                message = None
             else:
                 entity_field, freshness_seconds = FEED_TYPES[feed_type]
                 result["entityCount"] = sum(entity.HasField(entity_field) for entity in message.entity)
@@ -97,7 +99,75 @@ def _check_feed(city, feed_type, entry):
         result["detail"] = "Invalid GTFS Realtime protobuf"
 
     with _cache_lock:
-        _cache[cache_key] = (now, result)
+        _cache[cache_key] = (now, result, message)
+    return result
+
+
+def _translated_text(value, language):
+    translations = value.translation
+    preferred = language.lower().split("-")[0]
+    match = next((item for item in translations if item.language.lower().split("-")[0] == preferred), None)
+    return (match or (translations[0] if translations else None)).text if translations else ""
+
+
+def get_realtime_entities(city, feed_type, language="pt"):
+    """Return fresh, bounded public vehicle positions or service alerts."""
+    if feed_type not in ("vehiclePositions", "serviceAlerts"):
+        raise ValueError("Unsupported realtime entity type")
+    entry = configured_feeds().get(city, {}).get(feed_type)
+    if not entry:
+        return {"supported": False, "connected": False, "status": "not_configured", "items": []}
+
+    status = _check_feed(city, feed_type, entry)
+    result = {"supported": True, "connected": status["status"] in ("ok", "empty"),
+              "status": status["status"], "feedTimestamp": status.get("feedTimestamp"), "items": []}
+    if not result["connected"]:
+        return result
+
+    cache_key = (city, feed_type, entry["url"], tuple(sorted(entry["headers"].items())))
+    with _cache_lock:
+        message = _cache[cache_key][2]
+    if message is None:
+        return result
+
+    now = datetime.now(timezone.utc).timestamp()
+    if feed_type == "vehiclePositions":
+        for entity in message.entity:
+            if not entity.HasField("vehicle") or not entity.vehicle.HasField("position"):
+                continue
+            vehicle = entity.vehicle
+            timestamp = vehicle.timestamp if vehicle.HasField("timestamp") else message.header.timestamp
+            if not timestamp or not -30 <= now - timestamp <= 90:
+                continue
+            position = vehicle.position
+            if not -90 <= position.latitude <= 90 or not -180 <= position.longitude <= 180:
+                continue
+            result["items"].append({
+                "vehicle_id": vehicle.vehicle.id if vehicle.HasField("vehicle") else entity.id,
+                "route_id": vehicle.trip.route_id if vehicle.HasField("trip") else "",
+                "lat": position.latitude,
+                "lon": position.longitude,
+                "timestamp": timestamp,
+            })
+    else:
+        for entity in message.entity:
+            if not entity.HasField("alert"):
+                continue
+            alert = entity.alert
+            if alert.active_period and not any(
+                (not period.HasField("start") or period.start <= now)
+                and (not period.HasField("end") or now <= period.end)
+                for period in alert.active_period
+            ):
+                continue
+            result["items"].append({
+                "id": entity.id,
+                "title": _translated_text(alert.header_text, language) if alert.HasField("header_text") else "",
+                "description": _translated_text(alert.description_text, language) if alert.HasField("description_text") else "",
+                "route_ids": sorted({selector.route_id for selector in alert.informed_entity if selector.HasField("route_id")}),
+                "effect": alert.effect if alert.HasField("effect") else None,
+            })
+    result["items"] = result["items"][:500]
     return result
 
 

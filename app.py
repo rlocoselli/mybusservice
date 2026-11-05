@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, make_response, render_template, Response
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from functools import wraps
 from time import perf_counter
 from urllib.parse import unquote
@@ -24,7 +24,7 @@ import jwt
 import sqlite3
 from developer_keys import authenticate_developer, create_key, identify_key, list_keys, register_developer, revoke_key
 from developer_copy import COPY as DEVELOPER_COPY, LANGUAGES as DEVELOPER_LANGUAGES
-from gtfs_realtime_status import get_realtime_status
+from gtfs_realtime_status import get_realtime_entities, get_realtime_status
 
 SWAGGER_DOCS_DIR = "swagger"
 
@@ -507,6 +507,52 @@ def getGtfsRealtimeStatus():
         city = request.args.get("city", "").strip() or None
         known_cities = template["cities"]["enum"]
         return jsonify(get_realtime_status(city, known_cities if isinstance(known_cities, list) else ()))
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 503
+
+
+@app.route('/insights/lines/<string:city>', methods=["GET"])
+@swag_from("getPublicLineInsights.yml")
+@token_required
+def getPublicLineInsights(city):
+    try:
+        if not is_logging_database_ready(LOGGING_DATABASE_NAME):
+            return jsonify({"city": city, "available": False, "items": []})
+        start = datetime.now(timezone.utc) - timedelta(days=30)
+        summary = get_line_utilization_summary(
+            LOGGING_DATABASE_NAME, city=city, route_id=request.args.get("routeId"), start_at=start
+        )
+        return jsonify({"city": city, "available": True, "periodStart": start.isoformat(), "items": summary})
+    except Exception as err:
+        return service_error_response(err)
+
+
+@app.route('/insights/realtime/<string:city>', methods=["GET"])
+@swag_from("getPublicRealtimeStatus.yml")
+@token_required
+def getPublicRealtimeStatus(city):
+    try:
+        return jsonify(get_realtime_status(city)[0])
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 503
+
+
+@app.route('/getRealtimeVehicles/<string:city>', methods=["GET"])
+@swag_from("getRealtimeVehicles.yml")
+@token_required
+def getRealtimeVehicles(city):
+    try:
+        return jsonify(get_realtime_entities(city, "vehiclePositions"))
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 503
+
+
+@app.route('/getRealtimeAlerts/<string:city>', methods=["GET"])
+@swag_from("getRealtimeAlerts.yml")
+@token_required
+def getRealtimeAlerts(city):
+    try:
+        return jsonify(get_realtime_entities(city, "serviceAlerts", request.args.get("lang", "pt")))
     except ValueError as err:
         return jsonify({"message": str(err)}), 503
 

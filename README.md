@@ -40,6 +40,8 @@ O painel administrativo consulta `/admin/gtfs-realtime/status` para mostrar disp
 
 Cada tipo de fluxo é opcional. As URLs precisam usar HTTPS; mantenha chaves em `headers` da configuração do servidor, nunca no JavaScript do painel. O endpoint exige token de administrador, aceita `?city=Grenoble_France` e omite URLs e credenciais da resposta. As cidades do GTFS estático sem feed configurado aparecem como **Não configurado**. As verificações têm timeout de 5 segundos, limite de 5 MB e cache de 30 segundos. O estado **Antigo** usa o timestamp do cabeçalho: mais de 90 segundos para viagens/veículos ou 10 minutos para alertas. É uma checagem de saúde do feed; não valida cada entidade nem comprova cobertura completa da cidade.
 
+O site Meu Busão consulta a API central no servidor com sua chave de leitura. Os endpoints `GET /insights/lines/<city>` (observações agregadas dos últimos 30 dias, com `routeId` opcional), `GET /insights/realtime/<city>`, `GET /getRealtimeVehicles/<city>` e `GET /getRealtimeAlerts/<city>?lang=pt` aceitam a chave individual e não expõem as URLs privadas dos fornecedores. Veículos só são publicados quando a posição tem até 90 segundos; alertas seguem seus períodos ativos. Se não houver feed configurado, a resposta indica `supported=false` e retorna lista vazia.
+
 Envie a chave em `X-API-Key` (ou no cabeçalho legado `token`) para consultas de transporte:
 
 ```bash

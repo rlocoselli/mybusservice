@@ -1,0 +1,11 @@
+summary: "Fresh GTFS Realtime vehicle positions"
+description: "Returns positions no older than 90 seconds from the configured Vehicle Positions feed."
+produces: ["application/json"]
+parameters:
+- {in: header, name: X-API-Key, type: string, required: true}
+- {in: path, name: city, type: string, required: true}
+responses:
+  200:
+    description: "Supported, connected and fresh vehicle items"
+  403:
+    description: "API key required"
