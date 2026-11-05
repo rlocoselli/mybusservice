@@ -1,0 +1,50 @@
+summary: "Check configured GTFS Realtime feeds by city"
+description: "Checks server-configured Trip Updates, Vehicle Positions and Service Alerts feeds. Provider URLs and credentials are never returned. Results are cached for 30 seconds."
+produces:
+- "application/json"
+parameters:
+- in: "header"
+  name: "token"
+  type: "string"
+  required: true
+- in: "query"
+  name: "city"
+  type: "string"
+  required: false
+  description: "GTFS city database ID. Omit to check all configured cities."
+responses:
+  200:
+    description: "Per-city feed health and freshness"
+    schema:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          city:
+            type: "string"
+          status:
+            type: "string"
+            enum: [not_configured, ok, empty, stale, no_timestamp, error]
+          feeds:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                type:
+                  type: "string"
+                status:
+                  type: "string"
+                entityCount:
+                  type: "integer"
+                feedTimestamp:
+                  type: "string"
+                ageSeconds:
+                  type: "integer"
+                checkedAt:
+                  type: "string"
+                detail:
+                  type: "string"
+  403:
+    description: "Administrator token required"
+  503:
+    description: "Feed configuration is invalid"

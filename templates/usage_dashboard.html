@@ -112,6 +112,18 @@
     </details>
 
     <details class="dashboard-section" open>
+      <summary>GTFS Realtime par ville <span>Disponibilité et fraîcheur des flux configurés</span></summary>
+      <article class="table-card operational-card">
+        <div class="card-heading">
+          <h2>État des flux temps réel</h2>
+          <p>Trip Updates, positions des véhicules et alertes de service.</p>
+        </div>
+        <p class="operational-note">La fraîcheur est calculée à partir de l'horodatage du flux. Elle ne garantit pas que chaque véhicule ou trajet a été mis à jour récemment. Les flux sans URL configurée sont signalés séparément.</p>
+        <div id="realtimeStatus" aria-live="polite">Chargement des flux...</div>
+      </article>
+    </details>
+
+    <details class="dashboard-section" open>
       <summary>Graphiques <span>Trafic et fréquentation</span></summary>
     <section class="chart-grid">
       <article class="chart-card source-card">

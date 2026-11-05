@@ -433,6 +433,57 @@ function formatObservationDate(value) {
     : escapeHtml(date.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }));
 }
 
+const realtimeFeedLabels = {
+  tripUpdates: "Horaires / trajets",
+  vehiclePositions: "Positions véhicules",
+  serviceAlerts: "Alertes"
+};
+
+const realtimeStatusLabels = {
+  not_configured: "Non configuré",
+  ok: "Disponible",
+  empty: "Flux vide",
+  stale: "Ancien",
+  no_timestamp: "Horodatage absent",
+  error: "Erreur"
+};
+
+function realtimeStatusBadge(status) {
+  const safeStatus = Object.hasOwn(realtimeStatusLabels, status) ? status : "error";
+  return `<span class="realtime-status" data-status="${safeStatus}">${realtimeStatusLabels[safeStatus]}</span>`;
+}
+
+function renderRealtimeStatus(cities) {
+  const target = document.getElementById("realtimeStatus");
+  if (!cities.length) {
+    target.textContent = "Aucun flux GTFS Realtime n'est configuré pour les villes du service.";
+    return;
+  }
+  target.innerHTML = cities.map((city) => `
+    <div class="realtime-city">
+      <div class="realtime-city-title"><strong>${escapeHtml(city.city)}</strong>${realtimeStatusBadge(city.status)}</div>
+      ${city.feeds.length ? `<div class="realtime-feed-list">${city.feeds.map((feed) => `
+        <div class="realtime-feed">
+          <strong>${escapeHtml(realtimeFeedLabels[feed.type] || feed.type)}</strong>
+          ${realtimeStatusBadge(feed.status)}
+          <span>${feed.entityCount == null ? "—" : `${formatNumber(feed.entityCount)} entités`}</span>
+          <span>${feed.ageSeconds == null ? "" : `Flux âgé de ${formatNumber(feed.ageSeconds)} s`}</span>
+          <span>${feed.detail ? escapeHtml(feed.detail) : ""}</span>
+          <span>${feed.checkedAt ? `Vérifié : ${formatObservationDate(feed.checkedAt)}` : ""}</span>
+        </div>`).join("")}</div>` : "Aucune URL de flux configurée pour cette ville."}
+    </div>`).join("");
+}
+
+async function loadRealtimeStatus(token) {
+  const city = new FormData(document.getElementById("filtersForm")).get("city");
+  const query = city ? `?city=${encodeURIComponent(city)}` : "";
+  try {
+    renderRealtimeStatus(await fetchJson(`/admin/gtfs-realtime/status${query}`, token));
+  } catch (error) {
+    document.getElementById("realtimeStatus").textContent = `Vérification impossible : ${error.message}`;
+  }
+}
+
 function getConsultedRoutes(summary) {
   const routes = new Map();
 
@@ -706,6 +757,9 @@ async function loadDashboard() {
 
   const form = document.getElementById("filtersForm");
   const queryString = buildQueryString(new FormData(form));
+
+  document.getElementById("realtimeStatus").textContent = "Vérification des flux...";
+  loadRealtimeStatus(token);
 
   setMessage("Chargement des métriques...");
 

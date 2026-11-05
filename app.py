@@ -24,6 +24,7 @@ import jwt
 import sqlite3
 from developer_keys import authenticate_developer, create_key, identify_key, list_keys, register_developer, revoke_key
 from developer_copy import COPY as DEVELOPER_COPY, LANGUAGES as DEVELOPER_LANGUAGES
+from gtfs_realtime_status import get_realtime_status
 
 SWAGGER_DOCS_DIR = "swagger"
 
@@ -496,6 +497,18 @@ def setupMyBusLoggingDatabase():
 @app.route('/admin/usage-dashboard', methods=["GET"])
 def usageDashboard():
     return render_template("usage_dashboard.html")
+
+
+@app.route('/admin/gtfs-realtime/status', methods=["GET"])
+@swag_from("getGtfsRealtimeStatus.yml")
+@admin_token_required
+def getGtfsRealtimeStatus():
+    try:
+        city = request.args.get("city", "").strip() or None
+        known_cities = template["cities"]["enum"]
+        return jsonify(get_realtime_status(city, known_cities if isinstance(known_cities, list) else ()))
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 503
 
 
 @app.route('/admin/login', methods=["GET"])

@@ -24,6 +24,22 @@ Pour identifier les clients de façon fiable, envoyez `X-Client-Application: web
 
 Abra `https://mybusaoservice.audeladedonnees.fr/developer`, selecione um dos seis idiomas (português, inglês, francês, espanhol, italiano ou alemão), crie uma conta de desenvolvedor (senha com pelo menos 12 caracteres), entre e escolha **Gerar chave**. Copie a chave no momento da criação: o servidor guarda apenas seu hash e não pode mostrá-la novamente. Você pode manter até três chaves ativas e revogá-las na mesma página.
 
+### GTFS Realtime por cidade
+
+O painel administrativo consulta `/admin/gtfs-realtime/status` para mostrar disponibilidade e idade dos fluxos GTFS Realtime. Configure no servidor a variável `GTFS_REALTIME_FEEDS` com um objeto JSON cujas chaves são os mesmos IDs de cidade usados nas rotas da API:
+
+```json
+{
+  "Grenoble_France": {
+    "tripUpdates": {"url": "https://provider.example/trips.pb", "headers": {"X-API-Key": "secret"}},
+    "vehiclePositions": "https://provider.example/vehicles.pb",
+    "serviceAlerts": "https://provider.example/alerts.pb"
+  }
+}
+```
+
+Cada tipo de fluxo é opcional. As URLs precisam usar HTTPS; mantenha chaves em `headers` da configuração do servidor, nunca no JavaScript do painel. O endpoint exige token de administrador, aceita `?city=Grenoble_France` e omite URLs e credenciais da resposta. As cidades do GTFS estático sem feed configurado aparecem como **Não configurado**. As verificações têm timeout de 5 segundos, limite de 5 MB e cache de 30 segundos. O estado **Antigo** usa o timestamp do cabeçalho: mais de 90 segundos para viagens/veículos ou 10 minutos para alertas. É uma checagem de saúde do feed; não valida cada entidade nem comprova cobertura completa da cidade.
+
 Envie a chave em `X-API-Key` (ou no cabeçalho legado `token`) para consultas de transporte:
 
 ```bash
