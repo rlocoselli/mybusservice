@@ -22,7 +22,7 @@ Pour identifier les clients de façon fiable, envoyez `X-Client-Application: web
 
 ## Chaves individuais da API
 
-Abra `https://mybusaoservice.audeladedonnees.fr/developer`, crie uma conta de desenvolvedor (senha com pelo menos 12 caracteres), entre e escolha **Gerar nova chave**. Copie a chave no momento da criação: o servidor guarda apenas seu hash e não pode mostrá-la novamente. Você pode manter até três chaves ativas e revogá-las na mesma página.
+Abra `https://mybusaoservice.audeladedonnees.fr/developer`, selecione um dos seis idiomas (português, inglês, francês, espanhol, italiano ou alemão), crie uma conta de desenvolvedor (senha com pelo menos 12 caracteres), entre e escolha **Gerar chave**. Copie a chave no momento da criação: o servidor guarda apenas seu hash e não pode mostrá-la novamente. Você pode manter até três chaves ativas e revogá-las na mesma página.
 
 Envie a chave em `X-API-Key` (ou no cabeçalho legado `token`) para consultas de transporte:
 

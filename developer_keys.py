@@ -53,16 +53,16 @@ def _session(database_name):
 def register_developer(username, password, database_name=DEFAULT_LOG_DATABASE):
     username = (username or "").strip().lower()
     if not re.fullmatch(r"[a-z0-9][a-z0-9._-]{2,59}", username):
-        raise ValueError("Use 3–60 letters, numbers, dots, hyphens or underscores for the username.")
+        raise ValueError("invalid_username")
     if not isinstance(password, str) or len(password) < 12 or len(password) > 256:
-        raise ValueError("The password must contain 12–256 characters.")
+        raise ValueError("invalid_password")
     with _session(database_name) as session:
         session.add(Developer(username=username, password_hash=generate_password_hash(password, method="pbkdf2:sha256")))
         try:
             session.commit()
         except IntegrityError as error:
             session.rollback()
-            raise ValueError("This username is already in use.") from error
+            raise ValueError("username_taken") from error
     return username
 
 
@@ -99,11 +99,11 @@ def list_keys(developer_id, database_name=DEFAULT_LOG_DATABASE):
 def create_key(developer_id, name, database_name=DEFAULT_LOG_DATABASE):
     name = (name or "").strip()
     if not 1 <= len(name) <= 80:
-        raise ValueError("Key name must contain 1–80 characters.")
+        raise ValueError("invalid_key_name")
     with _session(database_name) as session:
         active_count = session.scalar(select(func.count(DeveloperKey.id)).where(DeveloperKey.developer_id == developer_id, DeveloperKey.is_active.is_(True)))
         if active_count >= 3:
-            raise ValueError("Maximum of 3 active keys. Revoke one before creating another.")
+            raise ValueError("key_limit")
         raw = "mb_live_" + secrets.token_urlsafe(32)
         row = DeveloperKey(developer_id=developer_id, name=name, key_hash=sha256(raw.encode()).hexdigest(), prefix=raw[:16])
         session.add(row)

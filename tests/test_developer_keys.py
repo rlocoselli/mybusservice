@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 import app as service
 import developer_keys as keys
+from developer_copy import COPY, LANGUAGES
 
 
 class DeveloperKeyTests(unittest.TestCase):
@@ -27,6 +28,8 @@ class DeveloperKeyTests(unittest.TestCase):
     def test_create_use_revoke_and_admin_isolation(self):
         account = {"username": "company_1", "password": "a strong example password"}
         self.assertEqual(self.client.post("/developer/register", json=account).status_code, 201)
+        duplicate = self.client.post("/developer/register", json=account)
+        self.assertEqual(duplicate.get_json()["code"], "username_taken")
         created = self.client.post("/developer/keys", json={**account, "action": "create", "name": "Schedule app"})
         self.assertEqual(created.status_code, 201)
         raw = created.get_json()["key"]
@@ -49,6 +52,19 @@ class DeveloperKeyTests(unittest.TestCase):
         with service.app.test_request_context("/developer/register", method="POST", json={"username": "x", "password": "secret"}):
             payload = service.build_request_log_payload(service.app.response_class(status=400))
         self.assertIsNone(payload["request_payload"])
+
+    def test_portal_has_complete_copy_in_every_audela_language(self):
+        self.assertEqual(set(LANGUAGES), {"pt", "en", "fr", "es", "it", "de"})
+        baseline = set(COPY["pt"])
+        for lang in LANGUAGES:
+            with self.subTest(lang=lang):
+                self.assertEqual(set(COPY[lang]), baseline)
+                response = self.client.get(f"/developer?lang={lang}")
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(f'<html lang="{lang}">'.encode(), response.data)
+                self.assertIn(COPY[lang]["hero_title"].encode(), response.data)
+        regional = self.client.get("/developer", headers={"Accept-Language": "de-DE"})
+        self.assertIn(b'<html lang="de">', regional.data)
 
 
 if __name__ == "__main__":

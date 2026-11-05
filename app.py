@@ -23,6 +23,7 @@ import simplejson as json
 import jwt
 import sqlite3
 from developer_keys import authenticate_developer, create_key, identify_key, list_keys, register_developer, revoke_key
+from developer_copy import COPY as DEVELOPER_COPY, LANGUAGES as DEVELOPER_LANGUAGES
 
 SWAGGER_DOCS_DIR = "swagger"
 
@@ -419,32 +420,37 @@ def login():
 
 @app.route('/developer', methods=["GET"])
 def developerPortal():
-    return render_template("developer_portal.html")
+    requested = request.args.get("lang", "").lower().split("-")[0]
+    browser = next((code.lower().split("-")[0] for code, quality in request.accept_languages
+                    if quality > 0 and code.lower().split("-")[0] in DEVELOPER_LANGUAGES), "pt")
+    lang = requested if requested in DEVELOPER_LANGUAGES else browser
+    return render_template("developer_portal.html", lang=lang, languages=DEVELOPER_LANGUAGES, copy=DEVELOPER_COPY[lang])
 
 
 @app.route('/developer/register', methods=["POST"])
 def developerRegister():
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
-        return jsonify({"message": "A JSON object is required"}), 400
+        return jsonify({"code": "invalid_json"}), 400
     try:
         username = register_developer(payload.get("username"), payload.get("password"), LOGGING_DATABASE_NAME)
         return jsonify({"username": username, "message": "Account created"}), 201
     except ValueError as err:
-        return jsonify({"message": str(err)}), 400
+        return jsonify({"code": str(err)}), 400
     except Exception as err:
-        return service_error_response(err)
+        print(err)
+        return jsonify({"code": "server_error"}), 500
 
 
 @app.route('/developer/keys', methods=["POST"])
 def developerKeys():
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
-        return jsonify({"message": "A JSON object is required"}), 400
+        return jsonify({"code": "invalid_json"}), 400
     try:
         developer_id = authenticate_developer(payload.get("username"), payload.get("password"), LOGGING_DATABASE_NAME)
         if not developer_id:
-            return jsonify({"message": "Invalid credentials or temporarily locked account"}), 401
+            return jsonify({"code": "invalid_credentials"}), 401
         action = payload.get("action")
         if action == "list":
             return jsonify({"keys": list_keys(developer_id, LOGGING_DATABASE_NAME)})
@@ -455,15 +461,16 @@ def developerKeys():
         if action == "revoke":
             key_id = payload.get("keyId")
             if not isinstance(key_id, int) or isinstance(key_id, bool):
-                return jsonify({"message": "Valid keyId required"}), 400
+                return jsonify({"code": "invalid_key_id"}), 400
             if not revoke_key(developer_id, key_id, LOGGING_DATABASE_NAME):
-                return jsonify({"message": "Key not found"}), 404
+                return jsonify({"code": "key_not_found"}), 404
             return jsonify({"message": "Key revoked"})
-        return jsonify({"message": "Action must be list, create or revoke"}), 400
+        return jsonify({"code": "invalid_action"}), 400
     except ValueError as err:
-        return jsonify({"message": str(err)}), 400
+        return jsonify({"code": str(err)}), 400
     except Exception as err:
-        return service_error_response(err)
+        print(err)
+        return jsonify({"code": "server_error"}), 500
 
 
 @app.route('/admin/setupMyBusLoggingDatabase', methods=["POST"])
