@@ -64,14 +64,14 @@
         <small>codes HTTP ≥ 400</small>
       </article>
       <article class="kpi-card accent-teal">
-        <span class="kpi-label">Boardings</span>
+        <span class="kpi-label">Montées déclarées</span>
         <strong id="totalBoardingsKpi">0</strong>
-        <small>total fréquentation</small>
+        <small>sur les observations reçues</small>
       </article>
       <article class="kpi-card accent-ink">
         <span class="kpi-label">Occupation moyenne</span>
         <strong id="avgOccupancyKpi">0</strong>
-        <small>moyenne des logs</small>
+        <small>observations avec occupation renseignée</small>
       </article>
     </section>
 
@@ -79,6 +79,37 @@
       <button id="expandAllButton" type="button">Tout déplier</button>
       <button id="collapseAllButton" type="button">Tout replier</button>
     </div>
+
+    <details class="dashboard-section" open>
+      <summary>Indicateurs opérationnels par ligne <span>Observations par ligne et sens</span></summary>
+      <article class="table-card operational-card">
+        <div class="card-heading">
+          <h2>Fréquentation observée</h2>
+          <p>Les chiffres portent sur les événements reçus pendant la période sélectionnée.</p>
+        </div>
+        <p class="operational-note">Les voyages et véhicules sont comptés uniquement lorsque leur identifiant est fourni. « — » signifie qu'aucune valeur n'a été déclarée. Ces données ne mesurent ni la couverture complète du réseau ni la ponctualité.</p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ville</th>
+                <th>Route</th>
+                <th>Ligne</th>
+                <th>Direction</th>
+                <th>Observations</th>
+                <th>Voyages identifiés</th>
+                <th>Véhicules identifiés</th>
+                <th>Montées</th>
+                <th>Descentes</th>
+                <th>Occupation moy.</th>
+                <th>Dernière observation</th>
+              </tr>
+            </thead>
+            <tbody id="lineUtilizationTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </details>
 
     <details class="dashboard-section" open>
       <summary>Graphiques <span>Trafic et fréquentation</span></summary>
@@ -223,8 +254,8 @@
     </details>
 
     <details class="dashboard-section">
-      <summary>Tableaux détaillés <span>Usage API et fréquentation</span></summary>
-    <section class="table-grid">
+      <summary>Tableaux détaillés <span>Usage API</span></summary>
+    <section class="table-grid single-table-grid">
       <article class="table-card">
         <div class="card-heading">
           <h2>Détail usage API</h2>
@@ -244,28 +275,6 @@
               </tr>
             </thead>
             <tbody id="applicationUsageTableBody"></tbody>
-          </table>
-        </div>
-      </article>
-      <article class="table-card">
-        <div class="card-heading">
-          <h2>Détail fréquentation</h2>
-          <p>Vue agrégée par ligne.</p>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Ville</th>
-                <th>Route</th>
-                <th>Ligne</th>
-                <th>Direction</th>
-                <th>Événements</th>
-                <th>Boardings</th>
-                <th>Occupation moy.</th>
-              </tr>
-            </thead>
-            <tbody id="lineUtilizationTableBody"></tbody>
           </table>
         </div>
       </article>

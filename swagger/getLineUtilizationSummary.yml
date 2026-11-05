@@ -41,6 +41,21 @@ responses:
             type: "string"
           eventCount:
             type: "integer"
+          observedTripCount:
+            type: "integer"
+            description: "Distinct non-null trip IDs reported in this group"
+          observedVehicleCount:
+            type: "integer"
+            description: "Distinct non-null vehicle IDs reported in this group"
+          boardingSampleCount:
+            type: "integer"
+            description: "Events with a reported boarding count"
+          alightingSampleCount:
+            type: "integer"
+            description: "Events with a reported alighting count"
+          occupancySampleCount:
+            type: "integer"
+            description: "Events with a reported occupancy value"
           totalBoardings:
             type: "integer"
           totalAlightings:

@@ -271,7 +271,10 @@ function renderUtilizationTimeline(timeline) {
 }
 
 function renderRoutesChart(summary) {
-  const topItems = summary.slice(0, 6);
+  const topItems = summary
+    .filter((item) => item.boardingSampleCount)
+    .sort((a, b) => Number(b.totalBoardings || 0) - Number(a.totalBoardings || 0))
+    .slice(0, 6);
   upsertChart("topRoutesChart", {
     type: "doughnut",
     data: {
@@ -401,6 +404,10 @@ function fillApplicationTable(summary) {
 
 function fillUtilizationTable(summary) {
   const body = document.getElementById("lineUtilizationTableBody");
+  if (!summary.length) {
+    body.innerHTML = '<tr><td colspan="11">Aucune observation de fréquentation pour ces filtres.</td></tr>';
+    return;
+  }
   body.innerHTML = summary.map((item) => `
     <tr>
       <td>${escapeHtml(item.city || "-")}</td>
@@ -408,10 +415,22 @@ function fillUtilizationTable(summary) {
       <td>${escapeHtml(item.lineName || "-")}</td>
       <td>${escapeHtml(item.direction || "-")}</td>
       <td>${formatNumber(item.eventCount)}</td>
-      <td>${formatNumber(item.totalBoardings)}</td>
+      <td>${item.observedTripCount ? formatNumber(item.observedTripCount) : "—"}</td>
+      <td>${item.observedVehicleCount ? formatNumber(item.observedVehicleCount) : "—"}</td>
+      <td>${item.boardingSampleCount ? formatNumber(item.totalBoardings) : "—"}</td>
+      <td>${item.alightingSampleCount ? formatNumber(item.totalAlightings) : "—"}</td>
       <td>${item.averageOccupancy == null ? "-" : formatNumber(item.averageOccupancy, 1)}</td>
+      <td>${formatObservationDate(item.lastObservedAt)}</td>
     </tr>
   `).join("");
+}
+
+function formatObservationDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? escapeHtml(value)
+    : escapeHtml(date.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" }));
 }
 
 function getConsultedRoutes(summary) {
@@ -666,15 +685,16 @@ function refreshKpis(applicationSummary, utilizationSummary) {
   const totalRequests = applicationSummary.reduce((sum, item) => sum + Number(item.requestCount || 0), 0);
   const totalErrors = applicationSummary.reduce((sum, item) => sum + Number(item.errorCount || 0), 0);
   const totalBoardings = utilizationSummary.reduce((sum, item) => sum + Number(item.totalBoardings || 0), 0);
-  const occupancyValues = utilizationSummary.map((item) => Number(item.averageOccupancy)).filter((value) => !Number.isNaN(value));
-  const averageOccupancy = occupancyValues.length
-    ? occupancyValues.reduce((sum, value) => sum + value, 0) / occupancyValues.length
-    : 0;
+  const boardingSamples = utilizationSummary.reduce((sum, item) => sum + Number(item.boardingSampleCount || 0), 0);
+  const occupancySamples = utilizationSummary.reduce((sum, item) => sum + Number(item.occupancySampleCount || 0), 0);
+  const occupancyTotal = utilizationSummary.reduce((sum, item) =>
+    sum + (item.averageOccupancy == null ? 0 : Number(item.averageOccupancy) * Number(item.occupancySampleCount || 0)), 0);
+  const averageOccupancy = occupancySamples ? occupancyTotal / occupancySamples : null;
 
   document.getElementById("totalRequestsKpi").textContent = formatNumber(totalRequests);
   document.getElementById("totalErrorsKpi").textContent = formatNumber(totalErrors);
-  document.getElementById("totalBoardingsKpi").textContent = formatNumber(totalBoardings);
-  document.getElementById("avgOccupancyKpi").textContent = formatNumber(averageOccupancy, 1);
+  document.getElementById("totalBoardingsKpi").textContent = boardingSamples ? formatNumber(totalBoardings) : "—";
+  document.getElementById("avgOccupancyKpi").textContent = averageOccupancy == null ? "—" : formatNumber(averageOccupancy, 1);
 }
 
 async function loadDashboard() {

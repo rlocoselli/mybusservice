@@ -463,6 +463,8 @@ button:hover {
 .dashboard-section > .chart-grid,
 .dashboard-section > .table-grid { margin-top: 16px; }
 .dashboard-section > .insight-grid { margin-top: 16px; }
+.dashboard-section > .operational-card { margin-top: 16px; }
+.operational-note { margin: 0 0 18px; color: var(--muted); line-height: 1.5; }
 
 .source-card { grid-column: 1 / -1; }
 .source-layout { display: grid; grid-template-columns: minmax(220px, 360px) 1fr; gap: 30px; align-items: center; }
