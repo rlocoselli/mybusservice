@@ -20,6 +20,19 @@ Le dashboard admin (`/admin/usage-dashboard`) affiche les requêtes API par orig
 
 Pour identifier les clients de façon fiable, envoyez `X-Client-Application: web` depuis le site et `X-Client-Application: mobile` depuis l'application. Pour les requêtes historiques sans cet en-tête, le serveur utilise le `User-Agent` lorsqu'il est reconnaissable. Un navigateur sur téléphone reste classé comme site web. Les autres requêtes restent non identifiées.
 
+## Chaves individuais da API
+
+Abra `https://mybusaoservice.audeladedonnees.fr/developer`, crie uma conta de desenvolvedor (senha com pelo menos 12 caracteres), entre e escolha **Gerar nova chave**. Copie a chave no momento da criação: o servidor guarda apenas seu hash e não pode mostrá-la novamente. Você pode manter até três chaves ativas e revogá-las na mesma página.
+
+Envie a chave em `X-API-Key` (ou no cabeçalho legado `token`) para consultas de transporte:
+
+```bash
+curl -H 'X-API-Key: SUA_CHAVE' \
+  https://mybusaoservice.audeladedonnees.fr/getRoutes/Grenoble_France
+```
+
+As chaves são limitadas a 120 consultas por minuto e não autorizam rotas administrativas, logs nem escrita. Não inclua a chave em URLs, repositórios ou JavaScript público. Para servidores próprios, guarde-a numa variável de ambiente. O site Meu Busão também aceita `MEUBUSAO_API_KEY` no servidor em vez do antigo `MEUBUSAO_API_TOKEN` (identificador compartilhado). O dashboard administrativo continua usando login e senha separados.
+
 Un script est disponible: [deploy.sh](deploy.sh)
 
 ## Pré-requis

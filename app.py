@@ -22,6 +22,7 @@ from logging_database import assign_password_to_user, authenticate_app_user, cre
 import simplejson as json
 import jwt
 import sqlite3
+from developer_keys import authenticate_developer, create_key, identify_key, list_keys, register_developer, revoke_key
 
 SWAGGER_DOCS_DIR = "swagger"
 
@@ -142,6 +143,8 @@ def get_weekday_column_for_gtfs_date(normalized_date: str) -> str:
 
 
 def get_token_subject():
+    if request.environ.get("api_key_subject"):
+        return request.environ["api_key_subject"]
     token = request.headers.get("token")
 
     if not token:
@@ -282,7 +285,8 @@ def to_optional_float(value, field_name):
 
 def build_request_log_payload(response):
     view_args = request.view_args or {}
-    request_payload = request.get_json(silent=True) if request.method in ("POST", "PUT", "PATCH") else None
+    sensitive_path = request.path == "/login" or request.path.startswith("/developer/") or request.path == "/admin/users/password"
+    request_payload = request.get_json(silent=True) if request.method in ("POST", "PUT", "PATCH") and not sensitive_path else None
 
     if request_payload is not None and not isinstance(request_payload, (dict, list)):
         request_payload = {"value": request_payload}
@@ -298,7 +302,7 @@ def build_request_log_payload(response):
         "line_name": request.args.get("lineName") or request.args.get("line") or view_args.get("lineName"),
         "direction": request.args.get("direction") or view_args.get("direction"),
         "stop_id": view_args.get("stopId") or request.args.get("stopId"),
-        "query_params": request.args.to_dict(flat=False),
+        "query_params": {key: value for key, value in request.args.to_dict(flat=False).items() if key.lower() not in ("id", "token", "api_key", "password")},
         "request_payload": request_payload,
         "response_status": response.status_code,
         "duration_ms": get_request_duration_ms(),
@@ -310,16 +314,40 @@ def build_request_log_payload(response):
 def token_required(f):
     @wraps(f)
     def decorated (*args, **kwargs):
-        token = request.headers.get("token")
+        token = request.headers.get("X-API-Key") or request.headers.get("token")
 
         if not token:
             return jsonify({'message' : 'Token is missing'}), 403
         
-        try:
-            data = jwt.decode(token, app.config ['SECRET_KEY'])
-        except:
-            return jsonify({'message' : 'Token is invalid'}), 403
+        if token.startswith("mb_live_"):
+            if request.method != "GET" or request.path.startswith(("/admin/", "/logs/")):
+                return jsonify({"message": "API keys can only read transport data"}), 403
+            subject = identify_key(token, LOGGING_DATABASE_NAME)
+            if subject == "RATE_LIMITED":
+                return jsonify({"message": "API key rate limit exceeded (120 requests per minute)"}), 429
+            if not subject:
+                return jsonify({"message": "API key is invalid or revoked"}), 403
+            request.environ["api_key_subject"] = subject
+        else:
+            try:
+                jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            except Exception:
+                return jsonify({'message' : 'Token is invalid'}), 403
         
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get("token", "")
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        except Exception:
+            return jsonify({"message": "Admin token is invalid"}), 403
+        if data.get("scope") != "admin":
+            return jsonify({"message": "Administrator access required"}), 403
         return f(*args, **kwargs)
     return decorated
 
@@ -359,7 +387,7 @@ def login():
 
             authenticated_user = authenticate_app_user(username, password, LOGGING_DATABASE_NAME)
             if authenticated_user:
-                token = jwt.encode({"user" : authenticated_user["username"], "exp" : datetime.utcnow() + timedelta(minutes=30)}, app.config ["SECRET_KEY"])
+                token = jwt.encode({"user" : authenticated_user["username"], "scope": "admin", "exp" : datetime.utcnow() + timedelta(minutes=30)}, app.config ["SECRET_KEY"])
                 return jsonify({
                     "token" : token.decode("UTF-8"),
                     "user": authenticated_user,
@@ -385,6 +413,55 @@ def login():
             return jsonify({"token" : token.decode("UTF-8"), "authSource": "sqlite"})
 
         return make_response('Could not verify! Login Failed',401, {'Err-Message' : 'Login Failed'})
+    except Exception as err:
+        return service_error_response(err)
+
+
+@app.route('/developer', methods=["GET"])
+def developerPortal():
+    return render_template("developer_portal.html")
+
+
+@app.route('/developer/register', methods=["POST"])
+def developerRegister():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"message": "A JSON object is required"}), 400
+    try:
+        username = register_developer(payload.get("username"), payload.get("password"), LOGGING_DATABASE_NAME)
+        return jsonify({"username": username, "message": "Account created"}), 201
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 400
+    except Exception as err:
+        return service_error_response(err)
+
+
+@app.route('/developer/keys', methods=["POST"])
+def developerKeys():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"message": "A JSON object is required"}), 400
+    try:
+        developer_id = authenticate_developer(payload.get("username"), payload.get("password"), LOGGING_DATABASE_NAME)
+        if not developer_id:
+            return jsonify({"message": "Invalid credentials or temporarily locked account"}), 401
+        action = payload.get("action")
+        if action == "list":
+            return jsonify({"keys": list_keys(developer_id, LOGGING_DATABASE_NAME)})
+        if action == "create":
+            response = jsonify(create_key(developer_id, payload.get("name"), LOGGING_DATABASE_NAME))
+            response.headers["Cache-Control"] = "no-store"
+            return response, 201
+        if action == "revoke":
+            key_id = payload.get("keyId")
+            if not isinstance(key_id, int) or isinstance(key_id, bool):
+                return jsonify({"message": "Valid keyId required"}), 400
+            if not revoke_key(developer_id, key_id, LOGGING_DATABASE_NAME):
+                return jsonify({"message": "Key not found"}), 404
+            return jsonify({"message": "Key revoked"})
+        return jsonify({"message": "Action must be list, create or revoke"}), 400
+    except ValueError as err:
+        return jsonify({"message": str(err)}), 400
     except Exception as err:
         return service_error_response(err)
 
@@ -477,7 +554,7 @@ def createLineUtilizationLog():
 
 @app.route('/logs/line-utilization/summary', methods=["GET"])
 @swag_from("getLineUtilizationSummary.yml")
-@token_required
+@admin_token_required
 def getLineUtilizationSummary():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -494,7 +571,7 @@ def getLineUtilizationSummary():
 
 @app.route('/logs/line-utilization/timeline', methods=["GET"])
 @swag_from("getLineUtilizationTimeline.yml")
-@token_required
+@admin_token_required
 def getLineUtilizationTimeline():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -511,7 +588,7 @@ def getLineUtilizationTimeline():
 
 @app.route('/logs/application-usage/summary', methods=["GET"])
 @swag_from("getApplicationUsageSummary.yml")
-@token_required
+@admin_token_required
 def getApplicationUsageSummary():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -528,7 +605,7 @@ def getApplicationUsageSummary():
 
 @app.route('/logs/application-usage/timeline', methods=["GET"])
 @swag_from("getApplicationUsageTimeline.yml")
-@token_required
+@admin_token_required
 def getApplicationUsageTimeline():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -545,7 +622,7 @@ def getApplicationUsageTimeline():
 
 @app.route('/logs/application-usage/sources', methods=["GET"])
 @swag_from("getApplicationUsageSources.yml")
-@token_required
+@admin_token_required
 def getApplicationUsageSources():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -559,7 +636,7 @@ def getApplicationUsageSources():
 
 @app.route('/logs/export/application-usage.csv', methods=["GET"])
 @swag_from("exportApplicationUsageCsv.yml")
-@token_required
+@admin_token_required
 def exportApplicationUsageCsv():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -591,7 +668,7 @@ def exportApplicationUsageCsv():
 
 @app.route('/logs/export/line-utilization.csv', methods=["GET"])
 @swag_from("exportLineUtilizationCsv.yml")
-@token_required
+@admin_token_required
 def exportLineUtilizationCsv():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -624,7 +701,7 @@ def exportLineUtilizationCsv():
 
 @app.route('/logs/export/dashboard.pdf', methods=["GET"])
 @swag_from("exportDashboardPdf.yml")
-@token_required
+@admin_token_required
 def exportDashboardPdf():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -645,7 +722,7 @@ def exportDashboardPdf():
 
 @app.route('/admin/users', methods=["GET"])
 @swag_from("getAppUsers.yml")
-@token_required
+@admin_token_required
 def getAppUsers():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):
@@ -658,7 +735,7 @@ def getAppUsers():
 
 @app.route('/admin/users/password', methods=["POST"])
 @swag_from("assignUserPassword.yml")
-@token_required
+@admin_token_required
 def assignUserPassword():
     try:
         if not is_logging_database_ready(LOGGING_DATABASE_NAME):

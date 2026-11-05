@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chaves da API · Meu Busão</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+  <script src="{{ url_for('static', filename='developer_portal.js') }}" defer></script>
+</head>
+<body>
+  <main class="page-shell developer-shell">
+    <header class="hero-panel">
+      <div>
+        <p class="eyebrow">Meu Busão · Desenvolvedores</p>
+        <h1>Crie sua chave da API</h1>
+        <p class="hero-copy">Use uma chave individual para consultar linhas, paradas e horários. Você pode revogá-la a qualquer momento.</p>
+      </div>
+      <nav class="hero-nav"><a class="hero-link" href="https://meubusao.audeladedonnees.fr/">Voltar ao site</a><a class="hero-link" href="/apidocs/">Endpoints da API</a></nav>
+    </header>
+
+    <div class="developer-grid">
+      <section class="login-card">
+        <h2>1. Criar conta</h2>
+        <p class="hero-copy">Escolha um usuário e uma senha com pelo menos 12 caracteres.</p>
+        <form id="registerForm" class="developer-form">
+          <label>Usuário<input name="username" autocomplete="username" minlength="3" maxlength="60" required></label>
+          <label>Senha<input name="password" type="password" autocomplete="new-password" minlength="12" required></label>
+          <button type="submit">Criar conta</button>
+        </form>
+      </section>
+      <section class="login-card">
+        <h2>2. Entrar e gerenciar chaves</h2>
+        <p class="hero-copy">Suas credenciais são usadas apenas nesta sessão da página.</p>
+        <form id="loginForm" class="developer-form">
+          <label>Usuário<input name="username" autocomplete="username" required></label>
+          <label>Senha<input name="password" type="password" autocomplete="current-password" required></label>
+          <button type="submit">Entrar</button>
+        </form>
+      </section>
+    </div>
+
+    <section id="keyPanel" class="login-card" hidden>
+      <div class="card-heading"><h2>Minhas chaves</h2><button id="signOutButton" type="button">Sair</button></div>
+      <form id="createKeyForm" class="developer-form developer-inline">
+        <label>Nome da chave<input name="name" maxlength="80" placeholder="Ex.: Meu aplicativo" required></label>
+        <button type="submit">Gerar nova chave</button>
+      </form>
+      <p class="hero-copy">Até 3 chaves ativas. Cada uma permite 120 consultas por minuto. A chave completa aparece apenas uma vez.</p>
+      <div id="newKeyPanel" class="new-key" hidden><strong>Copie sua chave agora:</strong><code id="newKey"></code><button id="copyKeyButton" type="button">Copiar</button></div>
+      <div id="keyList" class="developer-key-list"></div>
+    </section>
+
+    <section class="login-card">
+      <h2>Como usar</h2>
+      <ol class="developer-steps">
+        <li>Crie uma conta, entre e gere uma chave com um nome que identifique seu projeto.</li>
+        <li>Envie a chave no cabeçalho <code>X-API-Key</code> de cada consulta HTTPS. Nunca coloque a chave na URL nem no código público do navegador.</li>
+        <li>Se ela for exposta, revogue-a aqui e gere outra.</li>
+      </ol>
+      <pre class="developer-example"><code>curl -H 'X-API-Key: SUA_CHAVE' \
+  https://mybusaoservice.audeladedonnees.fr/getRoutes/Grenoble_France</code></pre>
+      <p class="hero-copy">As chaves só autorizam consultas de dados de transporte. O dashboard e a administração exigem uma conta administrativa separada. Para aplicações web públicas, guarde a chave no servidor e faça as chamadas por ele.</p>
+    </section>
+    <p id="developerMessage" class="status-line" role="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>
